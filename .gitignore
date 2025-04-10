@@ -1,0 +1,42 @@
+# Node modules
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment files
+client/.env
+server/.env
+
+# Build output
+/dist
+/client/dist
+/server/dist
+
+# Vite and other build tools cache
+/.vite
+/client/.vite
+/server/.vite
+
+# Log files
+*.log
+logs/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# npm debug file
+npm-debug.log*
+
+# yarn lock file (optional if using yarn instead of npm)
+yarn.lock
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Misc
+*.bak
+*.swp
