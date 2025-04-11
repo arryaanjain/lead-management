@@ -1,15 +1,16 @@
-import './App.css'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Form from './components/Form';
-function App() {
+import StatusHandler from './components/StatusHandler';
 
+const App = () => {
   return (
-    <>
-      <div className="App">
-        <h1 className="text-3xl text-center my-8">Lead Management System</h1>
-        <Form />
-      </div>
-    </>
-  )
-}
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Form />} />
+        <Route path="/status" element={<StatusHandler />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
 
-export default App
+export default App;

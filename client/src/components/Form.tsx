@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 
 // Define the form data type
 interface FormData {
@@ -10,6 +12,8 @@ interface FormData {
 }
 
 const Form: React.FC = () => {
+  // Add this inside your component
+  const navigate = useNavigate();
   // Use the FormData interface to type the state
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -28,29 +32,31 @@ const Form: React.FC = () => {
     }));
   };
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      console.log(`${import.meta.env.VITE_API_URL}/api/form/submit`);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/form/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-  
-      // Log the response text
-      const responseText = await response.text(); // Get the raw text
-      console.log(responseText);
-  
-      // Try to parse the JSON
-      const data = JSON.parse(responseText); // If it's valid JSON, this will work
-      alert(data.message);  // Assuming the API returns a message
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-  
+  // Handle form submission (updated)
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/form/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+
+    const responseText = await response.text();
+    const data = JSON.parse(responseText);
+    alert(data.message);
+
+    // Save phone to localStorage for status page
+    localStorage.setItem('leadPhone', formData.phone);
+
+    // Navigate to /status page
+    navigate('/status');
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
+
+
 
   return (
     <div className="max-w-lg mx-auto p-4 bg-white rounded-lg shadow-lg">

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import LeadsList from './components/LeadsList';
+import AddProspectiveLead from './components/AddProspectiveLead';
 
 const App: React.FC = () => {
   // State to control sidebar visibility
@@ -27,8 +28,11 @@ const App: React.FC = () => {
           <h2 className="text-2xl font-bold mb-4">Welcome to the Admin Dashboard</h2>
 
           {/* Main content section with scrollable LeadsList */}
-          <div className="">
+          {/* <div>
             <LeadsList />
+          </div> */}
+          <div>
+            <AddProspectiveLead />
           </div>
         </div>
       </div>
