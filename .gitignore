@@ -2,10 +2,12 @@
 node_modules/
 client/node_modules/
 server/node_modules/
+admin/node_modules/
 
 # Environment files
 client/.env
 server/.env
+admin/.env
 
 # Build output
 /dist
