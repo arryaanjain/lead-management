@@ -27,7 +27,7 @@ const App: React.FC = () => {
           <h2 className="text-2xl font-bold mb-4">Welcome to the Admin Dashboard</h2>
 
           {/* Main content section with scrollable LeadsList */}
-          <div className="overflow-y-auto h-full">
+          <div className="">
             <LeadsList />
           </div>
         </div>
