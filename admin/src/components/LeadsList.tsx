@@ -120,36 +120,36 @@ const LeadsList: React.FC = () => {
       </table>
     </div>
 
-    <div className="grid grid-cols-1 gap-4 md:hidden">
-  {leads.map((lead) => (
-    <div key={lead._id} className="bg-white space-y-2 shadow-md rounded-lg p-4">
-      <div className="text-sm">
-        <p><span className="font-semibold">Name:</span> {lead.name}</p>
-        <p><span className="font-semibold">Phone:</span> {lead.phone}</p>
-        <p><span className="font-semibold">City:</span> {lead.city}</p>
-        <p><span className="font-semibold">Business:</span> {lead.business}</p>
-        <p><span className="font-semibold">Role:</span> {lead.role}</p>
-        <p><span className="font-semibold">Status:</span> <span className={`capitalize ${lead.status === 'approved' ? 'text-green-600' : lead.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}`}>{lead.status}</span></p>
-      </div>
-      {lead.status === 'pending' && (
-        <div className="flex justify-start space-x-2 pt-2">
-          <button
-            onClick={() => handleApprove(lead._id)}
-            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-          >
-            Approve
-          </button>
-          <button
-            onClick={() => handleReject(lead._id)}
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            Reject
-          </button>
+        <div className="grid grid-cols-1 gap-4 md:hidden">
+    {leads.map((lead) => (
+        <div key={lead._id} className="bg-white space-y-2 shadow-md rounded-lg p-4">
+        <div className="text-sm">
+            <p><span className="font-semibold">Name:</span> {lead.name}</p>
+            <p><span className="font-semibold">Phone:</span> {lead.phone}</p>
+            <p><span className="font-semibold">City:</span> {lead.city}</p>
+            <p><span className="font-semibold">Business:</span> {lead.business}</p>
+            <p><span className="font-semibold">Role:</span> {lead.role}</p>
+            <p><span className="font-semibold">Status:</span> <span className={`capitalize ${lead.status === 'approved' ? 'text-green-600' : lead.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}`}>{lead.status}</span></p>
         </div>
-      )}
+        {lead.status === 'pending' && (
+            <div className="flex justify-start space-x-2 pt-2">
+            <button
+                onClick={() => handleApprove(lead._id)}
+                className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+            >
+                Approve
+            </button>
+            <button
+                onClick={() => handleReject(lead._id)}
+                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+                Reject
+            </button>
+            </div>
+        )}
+        </div>
+    ))}
     </div>
-  ))}
-</div>
 
     </>
   );

@@ -1,4 +1,8 @@
 // server/index.js
+//adding json webtoken AUTH
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -29,6 +33,20 @@ const leadSchema = new mongoose.Schema({
   
 // Create Lead model
 const Lead = mongoose.model('Lead', leadSchema);
+
+// JWT Helpers
+function generateToken(payload, expiresIn = '24h') {
+    return jwt.sign(payload, JWT_SECRET, { expiresIn });
+  }
+  
+  function verifyToken(token) {
+    try {
+      return jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return null;
+    }
+  }
+  
 
 // API route to handle form submission
 app.post('/api/form/submit', async (req, res) => {
@@ -82,15 +100,21 @@ app.patch('/api/leads/:id/approve', async (req, res) => {
         return res.status(404).json({ message: 'Lead not found' });
       }
   
-      lead.status = 'approved';  // Add a "status" field in the schema
+      lead.status = 'approved';
       await lead.save();
   
-      res.status(200).json({ message: 'Lead approved' });
+      const token = generateToken({ phone: lead.phone });
+  
+      res.status(200).json({
+        message: 'Lead approved',
+        token, // ✅ send token to frontend
+      });
     } catch (err) {
       console.error('Error approving lead:', err);
       res.status(500).json({ message: 'Internal Server Error' });
     }
   });
+  
   
   // API route to reject a lead
   app.patch('/api/leads/:id/reject', async (req, res) => {
@@ -110,6 +134,29 @@ app.patch('/api/leads/:id/approve', async (req, res) => {
       console.error('Error rejecting lead:', err);
       res.status(500).json({ message: 'Internal Server Error' });
     }
+  });
+  
+  //API for protecting catalogue
+  app.get('/api/catalogue', (req, res) => {
+    const authHeader = req.headers.authorization;
+  
+    if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+  
+    const token = authHeader.split(' ')[1]; // Bearer <token>
+    const decoded = verifyToken(token);
+  
+    if (!decoded) return res.status(401).json({ message: 'Invalid or expired token' });
+  
+    // Optional: further verify with DB if needed
+    // const lead = await Lead.findOne({ phone: decoded.phone, status: 'approved' })
+  
+    const catalogueData = [
+      { name: 'Product A', price: 100 },
+      { name: 'Product B', price: 200 },
+      // Add your catalogue here
+    ];
+  
+    res.json({ catalogue: catalogueData });
   });
   
 
