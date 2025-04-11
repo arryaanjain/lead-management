@@ -1,40 +1,24 @@
-// src/App.tsx
+// admin/App.tsx
 import React, { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
-import TopBar from './components/TopBar';
-import LeadsList from './components/LeadsList';
-import AddProspectiveLead from './components/AddProspectiveLead';
+import LeadsList from './pages/LeadsList';
+import AddProspectiveLead from './pages/AddProspectiveLead';
 
 const App: React.FC = () => {
-  // State to control sidebar visibility
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // Function to toggle the sidebar
-  const toggleSidebar = () => {
-    setIsSidebarOpen((prevState) => !prevState);
-  };
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar Component */}
       <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
-      <div className="flex-1 flex flex-col relative">
-        {/* Fixed TopBar */}
-        <TopBar toggleSidebar={toggleSidebar} />
-
-        {/* Main content - Scrollable area */}
-        <div className="flex-1 overflow-auto p-6 bg-gray-100 pt-16"> {/* pt-16 adds padding for the fixed TopBar */}
-          <h2 className="text-2xl font-bold mb-4">Welcome to the Admin Dashboard</h2>
-
-          {/* Main content section with scrollable LeadsList */}
-          {/* <div>
-            <LeadsList />
-          </div> */}
-          <div>
-            <AddProspectiveLead />
-          </div>
-        </div>
+      <div className="flex-1 p-4 overflow-y-auto ml-0 lg:ml-64">
+        <Routes>
+          <Route path="/leads" element={<LeadsList />} />
+          <Route path="/add" element={<AddProspectiveLead />} />
+          <Route path="*" element={<h1>Welcome to Admin Panel</h1>} />
+        </Routes>
       </div>
     </div>
   );

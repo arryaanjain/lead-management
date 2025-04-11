@@ -1,5 +1,6 @@
 // admin/components/Sidebar.tsx
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Sidebar: React.FC<{ isSidebarOpen: boolean, toggleSidebar: () => void }> = ({ isSidebarOpen, toggleSidebar }) => {
   return (
@@ -11,22 +12,22 @@ const Sidebar: React.FC<{ isSidebarOpen: boolean, toggleSidebar: () => void }> =
       <nav>
         <ul className="space-y-4">
           <li>
-            <a href="#" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Dashboard</a>
+            <Link to="/leads" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Leads</Link>
           </li>
           <li>
-            <a href="#" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Leads</a>
+            <Link to="/add" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Add Prospective</Link>
           </li>
           <li>
-            <a href="#" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Settings</a>
+            <Link to="/settings" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Settings</Link>
           </li>
         </ul>
       </nav>
-      {/* Button to toggle sidebar visibility on small screens */}
+
       <button
         className="lg:hidden absolute top-4 right-4 p-2 bg-gray-600 rounded-md hover:bg-gray-700 transition"
         onClick={toggleSidebar}
       >
-        <span className="text-xl">×</span> {/* Close Icon for Mobile */}
+        <span className="text-xl">×</span>
       </button>
     </div>
   );
