@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Lead = require('../models/Lead');
+const ProspectiveLead = require('../models/ProspectiveLead');
 const { generateAccessToken, generateRefreshToken } = require('../utils/token');
 const verify = require('../utils/verify');
 
@@ -15,22 +16,16 @@ router.get('/', verify, async (req, res) => {
   }
 });
 
-// Submit form (new lead)
-router.post('/form/submit', verify, async (req, res) => {
-  const { name, phone, city, business, role } = req.body;
-  if (!name || !phone || !city || !business || !role) {
-    return res.status(400).json({ message: 'All fields are required.' });
-  }
-
+router.get('/prospective', verify, async (req, res) => {
   try {
-    const newLead = new Lead({ name, phone, city, business, role });
-    await newLead.save();
-    res.status(200).json({ message: 'Form submitted successfully!' });
+    const leads = await ProspectiveLead.find();
+    res.status(200).json(leads);
   } catch (err) {
-    console.error('Error saving form data:', err);
+    console.error('Error fetching prospective leads:', err);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 // Approve a lead
 router.patch('/:id/approve', verify, async (req, res) => {
@@ -65,6 +60,28 @@ router.patch('/:id/reject', verify, async (req, res) => {
   } catch (err) {
     console.error('Error rejecting lead:', err);
     res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+// API to add a prospective lead
+router.post('/add', async (req, res) => {
+  try {
+    const { phone, name } = req.body;
+    
+    // Check if the lead already exists
+    const existingLead = await ProspectiveLead.findOne({ phone });
+    if (existingLead) {
+      return res.status(400).json({ message: 'Lead with this phone number already exists' });
+    }
+
+    // Create new lead
+    const newLead = new ProspectiveLead({ phone, name });
+    await newLead.save();
+
+    return res.status(201).json({ message: 'Prospective lead added successfully', lead: newLead });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 

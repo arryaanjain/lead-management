@@ -20,7 +20,7 @@ const LeadsList: React.FC = () => {
   useEffect(() => {
     const fetchLeads = async () => {
       try {
-        const response = await axiosJWT.get('/api/leads');
+        const response = await axiosJWT.get('/api/admin');
         console.log('Fetched leads:', response.data);
         console.log('Type of data:', typeof response.data);
         console.log('Fetched leads:', response.data); // Add this line
@@ -36,7 +36,7 @@ const LeadsList: React.FC = () => {
 
   const handleApprove = async (id: string) => {
     try {
-      await axiosJWT.patch(`/api/leads/${id}/approve`);
+      await axiosJWT.patch(`/api/admin/${id}/approve`);
       setLeads((prev) =>
         prev.map((lead) => (lead._id === id ? { ...lead, status: 'approved' } : lead))
       );
@@ -47,7 +47,7 @@ const LeadsList: React.FC = () => {
 
   const handleReject = async (id: string) => {
     try {
-      await axiosJWT.patch(`/api/leads/${id}/reject`);
+      await axiosJWT.patch(`/api/admin/${id}/reject`);
       setLeads((prev) =>
         prev.map((lead) => (lead._id === id ? { ...lead, status: 'rejected' } : lead))
       );

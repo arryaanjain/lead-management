@@ -2,9 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const leadsRouter = require('./routes/leads');
+const adminAPIs = require('./routes/adminAPIs');
 const authRouter = require('./routes/auth');
-const prospectiveLeadsRouter = require('./routes/prospectiveLeads'); // optional
+const clientAPIs = require('./routes/clientAPIs'); // optional
 
 dotenv.config();
 
@@ -19,9 +19,9 @@ mongoose.connect(process.env.MONGO_URI)
   .catch((err) => console.error('Error connecting to MongoDB:', err));
 
 // Routes
-app.use('/api/leads', leadsRouter);
+app.use('/api/admin', adminAPIs);
 app.use('/api/auth', authRouter);
-app.use('/api/prospective-leads', prospectiveLeadsRouter); // optional
+app.use('/api/client', clientAPIs); // optional
 
 app.get('/api/ping', (req, res) => {
   res.send('pong');
