@@ -9,21 +9,11 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '^/login': {
+      '^/api': {
         target: 'http://127.0.0.1:5020',
         changeOrigin: true,
-        rewrite: (path) => `/api${path}`, // /login -> /api/login
       },
-      '^/leads': {
-        target: 'http://127.0.0.1:5020',
-        changeOrigin: true,
-        rewrite: (path) => `/api${path}`, // /users -> /api/leads
-      },
-      '^/refresh': {
-        target: 'http://127.0.0.1:5020',
-        changeOrigin: true,
-        rewrite: (path) => `/api${path}`, // /refresh -> /api/refresh
-      },
-    },
+    }
+    
   },
 })

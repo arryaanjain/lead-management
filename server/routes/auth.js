@@ -5,7 +5,7 @@ const router = express.Router();
 const { generateAccessToken, generateRefreshToken } = require('../utils/token');
 const verify = require('../utils/verify');
 
-const refreshTokens = []; // In production, store in DB/Redis
+let refreshTokens = ['eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEiLCJpc0FkbWluIjp0cnVlLCJpYXQiOjE3NDQ2Mjg3MjR9.8p3GMVMRvpTxHmrihy6olzdPwFi9rTPXtOxSVEDHSSE']; // In production, store in DB/Redis
 
 // Dummy users (replace with DB lookup in real apps)
 const users = [
@@ -56,10 +56,19 @@ router.post("/refresh", (req, res) => {
 });
 
 // Logout
-router.post("/logout", verify, (req, res) => {
+router.post("/logout", (req, res) => {
   const refreshToken = req.body.token;
-  refreshTokens.splice(refreshTokens.indexOf(refreshToken), 1);
+
+  if (!refreshToken) {
+    return res.sendStatus(400); // Bad request
+  }
+
+  refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
   res.status(200).json("Logged out successfully");
+});
+
+router.get("/checkTokens", (req, res) => {
+  res.status(200).json(refreshTokens);
 });
 
 module.exports = router;
