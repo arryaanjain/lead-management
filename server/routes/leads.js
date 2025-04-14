@@ -1,29 +1,11 @@
 const express = require('express');
-const Lead = require('../models/Lead');
-const { generateToken, verifyToken } = require('../utils/auth');
-
 const router = express.Router();
+const Lead = require('../models/Lead');
+const { generateAccessToken, generateRefreshToken } = require('../utils/token');
+const verify = require('../utils/verify');
 
-// API route to handle form submission
-router.post('/api/form/submit', async (req, res) => {
-  const { name, phone, city, business, role } = req.body;
-
-  if (!name || !phone || !city || !business || !role) {
-    return res.status(400).json({ message: 'All fields are required.' });
-  }
-
-  try {
-    const newLead = new Lead({ name, phone, city, business, role });
-    await newLead.save();
-    return res.status(200).json({ message: 'Form submitted successfully!' });
-  } catch (err) {
-    console.error('Error saving form data:', err);
-    return res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
-
-// API route to fetch all leads
-router.get('/api/leads', async (req, res) => {
+// Get all leads
+router.get('/', verify, async (req, res) => {
   try {
     const leads = await Lead.find();
     res.status(200).json(leads);
@@ -33,40 +15,48 @@ router.get('/api/leads', async (req, res) => {
   }
 });
 
-// API route to approve a lead
-router.patch('/api/leads/:id/approve', async (req, res) => {
+// Submit form (new lead)
+router.post('/form/submit', verify, async (req, res) => {
+  const { name, phone, city, business, role } = req.body;
+  if (!name || !phone || !city || !business || !role) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  try {
+    const newLead = new Lead({ name, phone, city, business, role });
+    await newLead.save();
+    res.status(200).json({ message: 'Form submitted successfully!' });
+  } catch (err) {
+    console.error('Error saving form data:', err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+// Approve a lead
+router.patch('/:id/approve', verify, async (req, res) => {
   try {
     const { id } = req.params;
     const lead = await Lead.findById(id);
-
-    if (!lead) {
-      return res.status(404).json({ message: 'Lead not found' });
-    }
+    if (!lead) return res.status(404).json({ message: 'Lead not found' });
 
     lead.status = 'approved';
     await lead.save();
 
-    const token = generateToken({ phone: lead.phone });
+    const token = generateAccessToken({ id: lead._id, isAdmin: false });
 
-    res.status(200).json({
-      message: 'Lead approved',
-      token, // ✅ send token to frontend
-    });
+    res.status(200).json({ message: 'Lead approved', token });
   } catch (err) {
     console.error('Error approving lead:', err);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
-// API route to reject a lead
-router.patch('/api/leads/:id/reject', async (req, res) => {
+// Reject a lead
+router.patch('/:id/reject', verify, async (req, res) => {
   try {
     const { id } = req.params;
     const lead = await Lead.findById(id);
-
-    if (!lead) {
-      return res.status(404).json({ message: 'Lead not found' });
-    }
+    if (!lead) return res.status(404).json({ message: 'Lead not found' });
 
     lead.status = 'rejected';
     await lead.save();
@@ -79,5 +69,3 @@ router.patch('/api/leads/:id/reject', async (req, res) => {
 });
 
 module.exports = router;
-
-

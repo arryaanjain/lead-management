@@ -19,7 +19,7 @@ const LeadsList: React.FC = () => {
   useEffect(() => {
     const fetchLeads = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/leads`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/leads`);
         const data = await response.json();
         setLeads(data);
         setLoading(false);
@@ -33,7 +33,7 @@ const LeadsList: React.FC = () => {
 
   const handleApprove = async (id: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/leads/${id}/approve`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/leads/${id}/approve`, {
         method: 'PATCH',
       });
 
@@ -51,7 +51,7 @@ const LeadsList: React.FC = () => {
 
   const handleReject = async (id: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/leads/${id}/reject`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/leads/${id}/reject`, {
         method: 'PATCH',
       });
 
