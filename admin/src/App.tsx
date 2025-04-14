@@ -6,6 +6,7 @@ import AddProspectiveLead from './pages/AddProspectiveLead';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './pages/AdminLayout';
+import ProspectiveLeadsList from './pages/ProspectiveLeadsList';
 
 const App: React.FC = () => {
   return (
@@ -22,6 +23,8 @@ const App: React.FC = () => {
       >
         <Route path="leads" element={<LeadsList />} />
         <Route path="add" element={<AddProspectiveLead />} />
+        <Route path="prospective-leads" element={<ProspectiveLeadsList />} />
+
         <Route index element={<h1>Welcome to Admin Panel</h1>} />
       </Route>
     </Routes>
