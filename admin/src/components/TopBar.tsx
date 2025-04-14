@@ -1,3 +1,4 @@
+// src/components/TopBar.tsx
 import { FC } from 'react';
 import axiosJWT from '../utils/axiosInstance';
 
@@ -9,7 +10,6 @@ const TopBar: FC<TopBarProps> = ({ toggleSidebar }) => {
 
   const handleLogout = async () => {
     try {
-      // Get the refresh token from localStorage or wherever it's stored
       const refreshToken = localStorage.getItem('refreshToken');
       
       if (!refreshToken) {
@@ -17,18 +17,14 @@ const TopBar: FC<TopBarProps> = ({ toggleSidebar }) => {
         return;
       }
 
-      // Make the logout request using axios
       const response = await axiosJWT.post('/api/auth/logout', {
         token: refreshToken,
       });
 
       if (response.status === 200) {
-        // Optionally, clear any client-side session or localStorage items
-        localStorage.removeItem('refreshToken'); // Remove refresh token
-        localStorage.removeItem('accessToken'); // Remove access token
-
-        // Redirect user to the login page or a different route
-        window.location.href = '/admin/login'; // Adjust the redirect URL as needed
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('accessToken');
+        window.location.href = '/admin/login';
       }
     } catch (error) {
       console.error('Logout error:', error);
@@ -36,13 +32,13 @@ const TopBar: FC<TopBarProps> = ({ toggleSidebar }) => {
   };
 
   return (
-    <div className="fixed top-0 z-20 h-16 px-4 shadow-md bg-gray-800 text-white flex justify-between items-center w-full lg:left-64 left-0 transition-all duration-300">
+    <div className="fixed top-0 z-20 w-full h-16 px-4 shadow-md bg-gray-800 text-white flex justify-between items-center transition-all duration-300">
       <h1 className="text-xl font-semibold">Admin Dashboard</h1>
       <div className="flex items-center space-x-4">
         <p className="text-sm">Admin Name</p>
         <button 
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-          onClick={handleLogout} // Call handleLogout on click
+          onClick={handleLogout}
         >
           Logout
         </button>

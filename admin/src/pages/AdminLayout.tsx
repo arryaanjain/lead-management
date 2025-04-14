@@ -1,4 +1,4 @@
-// admin/layout/AdminLayout.tsx
+// src/layout/AdminLayout.tsx
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
@@ -9,10 +9,10 @@ const AdminLayout: React.FC = () => {
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
       <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <TopBar toggleSidebar={toggleSidebar} />
-      <div className="pt-16 lg:ml-64 transition-all duration-300">
+      <div className="pt-16 lg:ml-64 transition-all duration-300 flex-1">
         <main className="p-4">
           <Outlet />
         </main>

@@ -13,7 +13,7 @@ const Sidebar: React.FC<{ isSidebarOpen: boolean, toggleSidebar: () => void }> =
       <nav>
         <ul className="space-y-4">
           <li>
-            <Link to="/admin/leads" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Leads</Link>
+            <Link to="/admin/leads" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Leads Description</Link>
           </li>
           <li>
             <Link to="/admin/add" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Add Prospective</Link>
