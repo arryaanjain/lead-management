@@ -1,15 +1,14 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
-const REFRESH_SECRET = process.env.REFRESH_SECRET || 'super-refresh-secret-key';
 
 const generateAccessToken = (user) => {
-  return jwt.sign({ id: user.id, isAdmin: user.isAdmin }, JWT_SECRET, {
+  console.log("Using JWT secret for signing:", process.env.JWT_SECRET);
+  return jwt.sign({ id: user.id, isAdmin: user.isAdmin }, process.env.JWT_SECRET, {
     expiresIn: '30m',
   });
 };
 
 const generateRefreshToken = (user) => {
-  return jwt.sign({ id: user.id, isAdmin: user.isAdmin }, REFRESH_SECRET);
+  return jwt.sign({ id: user.id, isAdmin: user.isAdmin }, process.env.REFRESH_SECRET);
 };
 
 module.exports = {

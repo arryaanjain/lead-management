@@ -1,5 +1,6 @@
 // src/components/LeadsList.tsx
 import React, { useState, useEffect } from 'react';
+import axiosJWT from '../utils/axiosInstance';
 
 interface Lead {
   _id: string;
@@ -19,12 +20,14 @@ const LeadsList: React.FC = () => {
   useEffect(() => {
     const fetchLeads = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/leads`);
-        const data = await response.json();
-        setLeads(data);
-        setLoading(false);
+        const response = await axiosJWT.get('/api/leads');
+        console.log('Fetched leads:', response.data);
+        console.log('Type of data:', typeof response.data);
+        console.log('Fetched leads:', response.data); // Add this line
+        setLeads(typeof response.data === 'string' ? JSON.parse(response.data) : response.data);
       } catch (error) {
         console.error('Error fetching leads:', error);
+      } finally {
         setLoading(false);
       }
     };
@@ -33,17 +36,10 @@ const LeadsList: React.FC = () => {
 
   const handleApprove = async (id: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/leads/${id}/approve`, {
-        method: 'PATCH',
-      });
-
-      if (response.ok) {
-        setLeads((prevLeads) =>
-          prevLeads.map((lead) =>
-            lead._id === id ? { ...lead, status: 'approved' } : lead
-          )
-        );
-      }
+      await axiosJWT.patch(`/leads/${id}/approve`);
+      setLeads((prev) =>
+        prev.map((lead) => (lead._id === id ? { ...lead, status: 'approved' } : lead))
+      );
     } catch (error) {
       console.error('Error approving lead:', error);
     }
@@ -51,17 +47,10 @@ const LeadsList: React.FC = () => {
 
   const handleReject = async (id: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/leads/${id}/reject`, {
-        method: 'PATCH',
-      });
-
-      if (response.ok) {
-        setLeads((prevLeads) =>
-          prevLeads.map((lead) =>
-            lead._id === id ? { ...lead, status: 'rejected' } : lead
-          )
-        );
-      }
+      await axiosJWT.patch(`/leads/${id}/reject`);
+      setLeads((prev) =>
+        prev.map((lead) => (lead._id === id ? { ...lead, status: 'rejected' } : lead))
+      );
     } catch (error) {
       console.error('Error rejecting lead:', error);
     }
@@ -87,7 +76,7 @@ const LeadsList: React.FC = () => {
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
-          {leads.map((lead) => (
+          {Array.isArray(leads) && leads.map((lead) => (
             <tr key={lead._id} className="border-b hover:bg-gray-50 whitespace-nowrap">
             <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{lead.name}</td>
             <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{lead.phone}</td>

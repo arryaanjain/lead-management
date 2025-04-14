@@ -13,13 +13,13 @@ const Sidebar: React.FC<{ isSidebarOpen: boolean, toggleSidebar: () => void }> =
       <nav>
         <ul className="space-y-4">
           <li>
-            <Link to="/leads" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Leads</Link>
+            <Link to="/admin/leads" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Leads</Link>
           </li>
           <li>
-            <Link to="/add" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Add Prospective</Link>
+            <Link to="/admin/add" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Add Prospective</Link>
           </li>
           <li>
-            <Link to="/settings" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Settings</Link>
+            <Link to="/admin/settings" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Settings</Link>
           </li>
         </ul>
       </nav>
