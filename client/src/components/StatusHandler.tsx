@@ -1,5 +1,6 @@
 // src/components/StatusHandler.tsx
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Catalogue from './Catalogue';
 import WaitingApproval from './WaitingApproval';
 import axiosJWT from '../utils/axiosJWT';
@@ -9,14 +10,19 @@ type LeadStatus = 'approved' | 'pending' | 'rejected' | null;
 const StatusHandler: React.FC = () => {
   const [status, setStatus] = useState<LeadStatus>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const phone = localStorage.getItem('leadPhone');
-    if (!phone) return;
-
+    if (!phone) { 
+      localStorage.removeItem('leadPhone');
+      localStorage.removeItem('clientAccessToken');
+      navigate('/');
+      return;
+    }
     const fetchStatus = async () => {
       try {
-        const res = await axiosJWT.get(`${import.meta.env.VITE_API_URL}/api/leads/status/${phone}`);
+        const res = await axiosJWT.get(`${import.meta.env.VITE_API_URL}/api/client/leads/status/${phone}`);
         setStatus(res.data.status);
       } catch (err) {
         console.error('Error fetching lead status:', err);

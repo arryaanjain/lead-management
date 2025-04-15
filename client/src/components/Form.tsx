@@ -23,6 +23,10 @@ const Form: React.FC = () => {
 
   const [quickPhone, setQuickPhone] = useState<string>('');
 
+  //toggling either of the sections state management
+  const [activeSection, setActiveSection] = useState<'form' | 'quick'>('form');
+
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -33,6 +37,12 @@ const Form: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+      // Prevent quickAccess from being active when form is submitting
+    if (!formData.name || !formData.phone || !formData.city || !formData.business || !formData.role) {
+      alert("Please fill in all fields.");
+      return;
+    }
     try {
       const response = await axiosJWT.post('/api/client/form/submit', formData);
 
@@ -51,6 +61,11 @@ const Form: React.FC = () => {
   };
 
   const handleQuickAccess = async () => {
+    // Avoid firing API when the input is empty
+    if (!quickPhone.trim()) {
+      alert("Please enter your phone number.");
+      return;
+    }
     try {
       const response = await axiosJWT.post('/api/client/verify-phone', { phone: quickPhone });
 
@@ -67,8 +82,25 @@ const Form: React.FC = () => {
   };
 
   return (
+
     <div className="max-w-lg mx-auto p-4 bg-white rounded-lg shadow-lg space-y-8">
+      <div className="flex justify-center mb-6 space-x-4">
+        <button
+          onClick={() => setActiveSection('form')}
+          className={`px-4 py-2 rounded-lg ${activeSection === 'form' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+        >
+          New Lead
+        </button>
+        <button
+          onClick={() => setActiveSection('quick')}
+          className={`px-4 py-2 rounded-lg ${activeSection === 'quick' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+        >
+          Already Submitted
+        </button>
+      </div>
+
       {/* Main form */}
+      {activeSection === 'form' && (
       <div>
         <h2 className="text-xl font-semibold mb-4">Lead Form</h2>
         <form onSubmit={handleSubmit}>
@@ -142,8 +174,10 @@ const Form: React.FC = () => {
           </button>
         </form>
       </div>
+      )}
 
       {/* Quick access section */}
+      {activeSection === 'quick' && (
       <div className="border-t pt-6">
         <h3 className="text-lg font-semibold mb-2">Already filled the form?</h3>
         <p className="mb-4 text-sm text-gray-600">Enter your phone number below to access the catalogue directly.</p>
@@ -163,6 +197,7 @@ const Form: React.FC = () => {
           </button>
         </div>
       </div>
+    )}
     </div>
   );
 };

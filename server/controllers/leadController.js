@@ -1,3 +1,5 @@
+const { generateAccessToken } = require('../utils/token');
+
 // controllers/leadController.js
 const Lead = require('../models/Lead');
 
