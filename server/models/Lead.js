@@ -7,6 +7,8 @@ const leadSchema = new mongoose.Schema({
   business: { type: String, required: true },
   role: { type: String, required: true },
   status: { type: String, default: 'pending' },
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model('Lead', leadSchema);

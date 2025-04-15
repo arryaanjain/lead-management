@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Catalogue from './Catalogue';
 import WaitingApproval from './WaitingApproval';
+import axiosJWT from '../utils/axiosJWT';
 
 type LeadStatus = 'approved' | 'pending' | 'rejected' | null;
 
@@ -15,9 +16,8 @@ const StatusHandler: React.FC = () => {
 
     const fetchStatus = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/leads/status/${phone}`);
-        const data = await res.json();
-        setStatus(data.status);
+        const res = await axiosJWT.get(`${import.meta.env.VITE_API_URL}/api/leads/status/${phone}`);
+        setStatus(res.data.status);
       } catch (err) {
         console.error('Error fetching lead status:', err);
       } finally {
