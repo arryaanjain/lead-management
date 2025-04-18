@@ -22,7 +22,7 @@ const Sidebar: React.FC<{ isSidebarOpen: boolean, toggleSidebar: () => void }> =
             <Link to="/admin/prospective-leads" className="block py-2 px-4 rounded hover:bg-gray-700 transition">View Prospective Leads</Link>
           </li>
           <li>
-            <Link to="/admin/settings" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Settings</Link>
+            <Link to="/admin/upload-catalogue" className="block py-2 px-4 rounded hover:bg-gray-700 transition">Upload Catalogue</Link>
           </li>
         </ul>
       </nav>
