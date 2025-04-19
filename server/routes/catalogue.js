@@ -126,7 +126,7 @@ router.get('/files', verify, async (req, res) => {
 
 
 
-// View Endpoint
+// View Endpoint (for admin)
 router.get('/pdf/:id', async (req, res) => {
   try {
     const fileId = new ObjectId(req.params.id);
@@ -152,6 +152,30 @@ router.get('/pdf/:id', async (req, res) => {
   } catch (err) {
     console.error('ID conversion error:', err);
     res.status(400).send('Invalid file ID format');
+  }
+});
+
+//View for client
+router.get('/pdf/primary', async (req, res) => {
+  try {
+    const gfs = gfsBucket; // get your initialized GridFSBucket
+
+    const filesCursor = gfs.find({ 'metadata.isPrimary': true });
+    const files = await filesCursor.toArray();
+
+    if (!files || files.length === 0) {
+      return res.status(404).json({ message: 'No primary catalogue found' });
+    }
+
+    const primaryFile = files[0];
+
+    res.set('Content-Type', 'application/pdf');
+
+    const downloadStream = gfs.openDownloadStream(primaryFile._id);
+    downloadStream.pipe(res);
+  } catch (err) {
+    console.error('Error streaming primary file:', err);
+    res.status(500).json({ message: 'Server error retrieving primary file' });
   }
 });
 
