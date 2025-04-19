@@ -9,7 +9,9 @@ const Catalogue: React.FC = () => {
   const [pdfUrl, setPdfUrl] = useState<string | undefined>(undefined);
 
   const handleLoad = () => {
-    setLoadChecked(true);
+    setTimeout(() => {
+      setLoadChecked(true);
+    }, 500); // Adjust as needed
   };
 
   const fetchPdfBlob = async () => {
@@ -75,7 +77,13 @@ const Catalogue: React.FC = () => {
           onDragStart={(e) => e.preventDefault()}
           onCopy={(e) => e.preventDefault()}
         >
-          
+
+        {!pdfUrl && (
+          <div className="absolute inset-0 z-20 bg-white flex items-center justify-center">
+            <p className="text-gray-600 text-lg">Loading catalogue...</p>
+          </div>
+        )}
+
         {/* Watermark overlay */}
         <div className="absolute z-10 inset-0 pointer-events-none opacity-10 flex justify-center items-center text-[8rem] font-bold rotate-[-45deg] text-black">
           CONFIDENTIAL
