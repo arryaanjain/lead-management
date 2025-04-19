@@ -1,3 +1,4 @@
+//for client side "blob"
 const express = require('express');
 const router = express.Router();
 const dotenv = require('dotenv');
@@ -6,6 +7,7 @@ dotenv.config();
 
 //utils
 const verify = require('../utils/verify');
+const verifyClientToken = require('../utils/verifyClientToken');
 
 //controllers
 const { deleteAllFiles } = require('../controllers/catalogueController');
@@ -127,55 +129,53 @@ router.get('/files', verify, async (req, res) => {
 
 
 // View Endpoint (for admin)
-router.get('/pdf/:id', async (req, res) => {
+router.get('/pdf/:id', verify, async (req, res) => {
   try {
-    const fileId = new ObjectId(req.params.id);
+    // Validate ID format first
+    const idString = req.params.id;
     
-    // Add sorting options
-    const downloadStream = gfsBucket.openDownloadStream(fileId, {
-      sort: { n: 1 }, // Ensure proper chunk order
-      allowDiskUse: true // Bypass memory limit
-    });
-
-    res.set('Content-Type', 'application/pdf');
-    
-    downloadStream.on('error', (err) => {
-      if (err.message.includes('FileNotFound')) {
-        return res.status(404).send('File not found');
-      }
-      console.error('Stream error:', err);
-      res.status(500).send('Download error');
-    });
-
-    downloadStream.pipe(res);
-
-  } catch (err) {
-    console.error('ID conversion error:', err);
-    res.status(400).send('Invalid file ID format');
-  }
-});
-
-//View for client
-router.get('/pdf/primary', async (req, res) => {
-  try {
-    const gfs = gfsBucket; // get your initialized GridFSBucket
-
-    const filesCursor = gfs.find({ 'metadata.isPrimary': true });
-    const files = await filesCursor.toArray();
-
-    if (!files || files.length === 0) {
-      return res.status(404).json({ message: 'No primary catalogue found' });
+    // Check if ID is valid MongoDB ObjectID
+    if (!ObjectId.isValid(idString)) {
+      return res.status(400).json({
+        error: 'Invalid file ID format',
+        expected: '24-character hex string',
+        received: idString
+      });
     }
 
-    const primaryFile = files[0];
+    // Convert to ObjectID
+    const fileId = new ObjectId(idString);
+    
+    // Configure download stream with error handling
+    const downloadStream = gfsBucket.openDownloadStream(fileId, {
+      sort: { n: 1 },
+      allowDiskUse: true
+    });
 
-    res.set('Content-Type', 'application/pdf');
+    // Set headers first
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${fileId.toString()}.pdf"`
+    });
 
-    const downloadStream = gfs.openDownloadStream(primaryFile._id);
+    // Handle stream errors
+    downloadStream.on('error', (err) => {
+      if (err.message.includes('FileNotFound')) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+      console.error('Stream error:', err);
+      res.status(500).json({ error: 'Download failed' });
+    });
+
+    // Pipe to response
     downloadStream.pipe(res);
+
   } catch (err) {
-    console.error('Error streaming primary file:', err);
-    res.status(500).json({ message: 'Server error retrieving primary file' });
+    console.error('Unexpected error:', err);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
@@ -199,7 +199,7 @@ router.post('/setPrimary', verify, async (req, res) => {
       .db()
       .collection('pdfs.files')
       .updateMany({}, { $set: { 'metadata.isPrimary': false } });
-
+      
     // Set the selected file as primary
     const setResult = await client
       .db()
@@ -214,7 +214,7 @@ router.post('/setPrimary', verify, async (req, res) => {
     } else {
       return res.status(404).json({ error: 'File not found or already primary' });
     }
-
+    
   } catch (err) {
     console.error('Error in setPrimary route:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -229,7 +229,7 @@ router.get('/count', verify, async (req, res) => {
   try {
     const db = mongoose.connection.db;
     const bucket = new GridFSBucket(db, { bucketName: 'pdfs' });
-
+    
     const files = await bucket.find({}).toArray();
     const fileCount = files.length;
 
@@ -245,6 +245,47 @@ router.get('/count', verify, async (req, res) => {
     });
   }
 });
+
+
+//View for client
+router.get('/client/pdf/primary', verifyClientToken, async (req, res) => {
+  try {
+    const files = await gfsBucket.find({ 'metadata.isPrimary': true }).toArray();
+
+    if (!files || files.length === 0) {
+      return res.status(404).json({ message: 'No primary catalogue found' });
+    }
+
+    const primaryFile = files[0];
+    console.log("Primary file _id:", primaryFile._id);
+    const downloadStream = gfsBucket.openDownloadStream(new ObjectId(primaryFile._id));
+
+    const chunks = [];
+
+    downloadStream.on('data', (chunk) => {
+      chunks.push(chunk);
+    });
+
+    downloadStream.on('error', (err) => {
+      console.error('Error during download stream:', err);
+      return res.status(500).json({ message: 'Error streaming file' });
+    });
+
+    downloadStream.on('end', () => {
+      const buffer = Buffer.concat(chunks);
+      res.writeHead(200, {
+        'Content-Type': 'application/pdf',
+        'Content-Length': buffer.length,
+        'Content-Disposition': 'inline; filename="catalogue.pdf"',
+      });
+      res.end(buffer);
+    });
+  } catch (err) {
+    console.error('Server error retrieving primary file:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 
 
 

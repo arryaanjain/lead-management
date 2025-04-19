@@ -1,7 +1,7 @@
 // src/types/token.ts
 export interface DecodedToken {
-    leadId: string;
     phone: string;
+    leadId: string;
     name: string;
     city: string;
     business: string;

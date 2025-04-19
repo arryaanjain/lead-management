@@ -4,16 +4,18 @@ const generateClientToken = (lead) => {
   return jwt.sign(
     {
       phone: lead.phone,
-      leadId: lead._id,
+      leadId: lead._id.toString(),
       name: lead.name,
       city: lead.city,
       business: lead.business,
       role: lead.role,
+      status: lead.status, // Optional
     },
     process.env.JWT_SECRET,
     { expiresIn: '15m' }
   );
 };
+
 
 const generateAccessToken = (user) => {
   console.log("Using JWT secret for signing:", process.env.JWT_SECRET);
