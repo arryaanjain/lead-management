@@ -15,7 +15,7 @@ const getAllProspectiveLeads = async (req, res) => {
 // Add a prospective lead
 const addProspectiveLead = async (req, res) => {
   try {
-    const { phone, name } = req.body;
+    const { phone, name, city } = req.body;
     
     // Check if the lead already exists
     const existingLead = await ProspectiveLead.findOne({ phone });
@@ -24,7 +24,7 @@ const addProspectiveLead = async (req, res) => {
     }
 
     // Create new lead
-    const newLead = new ProspectiveLead({ phone, name });
+    const newLead = new ProspectiveLead({ phone, name, city });
     await newLead.save();
 
     return res.status(201).json({ message: 'Prospective lead added successfully', lead: newLead });

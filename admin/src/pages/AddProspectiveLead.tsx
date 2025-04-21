@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 const AddProspectiveLead: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
+  const [city, setCity] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +16,7 @@ const AddProspectiveLead: React.FC = () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, name }),
+        body: JSON.stringify({ phone, name, city }),
       });
 
       const data = await response.json();
@@ -56,6 +57,18 @@ const AddProspectiveLead: React.FC = () => {
             name="phone"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="city" className="block text-gray-700">City</label>
+          <input
+            type="text"
+            id="city"
+            name="city"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg"
             required
           />
