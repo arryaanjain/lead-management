@@ -8,6 +8,7 @@ const UploadCatalogue: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [catalogueFiles, setCatalogueFiles] = useState<any[]>([]);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -24,9 +25,30 @@ const UploadCatalogue: React.FC = () => {
     }
   };
 
+  const fetchPDF = async () => {
+    try {
+      const response = await axiosJWT.get(
+        `${import.meta.env.VITE_API_URL}/api/catalogue/pdf/${primaryFile.id}`,
+        {
+          responseType: "blob", // Important to get it as a blob
+        }
+      );
+      const pdfBlob = new Blob([response.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(pdfBlob);
+      setPdfUrl(url);
+    } catch (error) {
+      console.error("Failed to load PDF:", error);
+    }
+  };
+  
+  const primaryFile = catalogueFiles.find(file => file.isPrimary);
+
   useEffect(() => {
     fetchCatalogueFiles();
-  }, []);
+    if (primaryFile?.id) {
+      fetchPDF();
+    }
+  }, [primaryFile?.id]);
 
   const handleSetPrimary = async (fileId: string) => {
     try {
@@ -72,7 +94,6 @@ const UploadCatalogue: React.FC = () => {
     }
   };
 
-  const primaryFile = catalogueFiles.find(file => file.isPrimary);
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white rounded-lg shadow-lg">
@@ -119,18 +140,22 @@ const UploadCatalogue: React.FC = () => {
             </p>
 
             <div className="aspect-w-16 aspect-h-9 mb-4">
-              <iframe
-                src={`${import.meta.env.VITE_API_URL}/api/catalogue/pdf/${primaryFile.id}`}
-                className="w-full h-96 rounded-lg border border-gray-300"
-                title="Primary Catalogue Preview"
-              />
+              {pdfUrl ? (
+                <iframe
+                  src={pdfUrl}
+                  className="w-full h-96 rounded-lg border border-gray-300"
+                  title="Primary Catalogue Preview"
+                />
+              ) : (
+                <p>Loading preview...</p>
+              )}
             </div>
-
             <a
-              href={`${import.meta.env.VITE_API_URL}/api/catalogue/pdf/${primaryFile.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block mt-2 px-4 py-2 bg-green-700 text-white font-semibold rounded-lg hover:bg-green-800"
+              href={pdfUrl ?? "#"}
+              download={primaryFile.filename}
+              className={`inline-block mt-2 px-4 py-2 bg-green-700 text-white font-semibold rounded-lg hover:bg-green-800 ${
+                !pdfUrl ? "pointer-events-none opacity-50" : ""
+              }`}
             >
               🔽 Download PDF
             </a>
