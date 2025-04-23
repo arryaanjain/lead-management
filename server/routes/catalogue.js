@@ -260,30 +260,21 @@ router.get('/client/pdf/primary', verifyClientToken, async (req, res) => {
     console.log("Primary file _id:", primaryFile._id);
     const downloadStream = gfsBucket.openDownloadStream(new ObjectId(primaryFile._id));
 
-    const chunks = [];
+   // Set the correct headers
+   res.setHeader('Content-Type', 'application/pdf');
+   res.setHeader('Content-Disposition', 'inline; filename="catalogue.pdf"');
 
-    downloadStream.on('data', (chunk) => {
-      chunks.push(chunk);
-    });
+   // Pipe the stream directly to the response
+   downloadStream.pipe(res);
 
-    downloadStream.on('error', (err) => {
-      console.error('Error during download stream:', err);
-      return res.status(500).json({ message: 'Error streaming file' });
-    });
-
-    downloadStream.on('end', () => {
-      const buffer = Buffer.concat(chunks);
-      res.writeHead(200, {
-        'Content-Type': 'application/pdf',
-        'Content-Length': buffer.length,
-        'Content-Disposition': 'inline; filename="catalogue.pdf"',
-      });
-      res.end(buffer);
-    });
-  } catch (err) {
-    console.error('Server error retrieving primary file:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
+   downloadStream.on('error', (err) => {
+     console.error('Error during download stream:', err);
+     res.status(500).json({ message: 'Error streaming file' });
+   });
+ } catch (err) {
+   console.error('Server error retrieving primary file:', err);
+   res.status(500).json({ message: 'Internal server error' });
+ }
 });
 
 

@@ -35,36 +35,36 @@ const Catalogue: React.FC = () => {
 
   // Load PDF document
   const loadPdfDocument = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-  
       const response = await axiosJWT.get("/api/catalogue/client/pdf/primary", {
         responseType: "blob",
       });
   
-      const blob = response.data;
-      const pdfUrl = URL.createObjectURL(blob);
+      const file = response.data;
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfData = new Uint8Array(arrayBuffer);
   
-      console.log("PDF URL for loading:", pdfUrl);
-  
-      const loadingTask = pdfjsLib.getDocument(pdfUrl);
-      const pdf = await loadingTask.promise;
+      const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+      console.log("PDF loaded");
   
       setPdfDocument(pdf);
       setNumPages(pdf.numPages);
       setCurrentPage(1);
     } catch (error: any) {
-      console.error("Failed to fetch catalogue PDF:", error);
-      setError("Failed to load catalogue");
+      console.error("Failed to fetch or parse PDF:", error);
+      setError("Invalid PDF structure.");
   
       if (error.response?.status === 401) {
         alert("Session expired or unauthorized. Redirecting...");
-        navigate('/status');
+        navigate("/status");
       }
     } finally {
       setLoading(false);
     }
   };
+  
+  
   
 
   // Render PDF page to canvas
