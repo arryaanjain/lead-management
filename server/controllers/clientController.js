@@ -10,6 +10,16 @@ const submitForm = async (req, res) => {
   }
 
   try {
+    // Check if a lead already exists for this phone
+    const existingLead = await Lead.findOne({ phone }).sort({ createdAt: -1 });
+
+    if (existingLead) {
+      return res.status(409).json({
+        message: 'A lead with this phone number already exists.',
+        status: existingLead.status,
+      });
+    }
+
     const newLead = new Lead({
       name,
       phone,
@@ -32,6 +42,7 @@ const submitForm = async (req, res) => {
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
 
 
 // Verify Phone Handler
