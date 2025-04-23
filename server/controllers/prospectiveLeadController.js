@@ -1,6 +1,6 @@
 // controllers/prospectiveLeadController.js
 const ProspectiveLead = require('../models/ProspectiveLead');
-
+const Lead = require('../models/Lead');
 // Get all prospective leads
 const getAllProspectiveLeads = async (req, res) => {
   try {
@@ -37,26 +37,34 @@ const addProspectiveLead = async (req, res) => {
 
 // Update lead status
 const updateLeadStatus = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { status } = req.body; // Extract status from request body
-  
-      // Check if the status is valid (either 'approved' or 'pending')
-      if (!['approved', 'pending'].includes(status)) {
-        return res.status(400).json({ message: 'Invalid status' });
-      }
-  
-      const lead = await ProspectiveLead.findById(id);
-      if (!lead) return res.status(404).json({ message: 'Prospective lead not found' });
-  
-      lead.status = status;  // Update status
-      await lead.save();
-  
-      res.status(200).json({ message: `Prospective lead ${status}`, lead });
-    } catch (err) {
-      console.error('Error updating prospective lead status:', err);
-      res.status(500).json({ message: 'Internal Server Error' });
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['approved', 'pending'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
     }
-  };
+
+    const prospectiveLead = await ProspectiveLead.findById(id);
+    if (!prospectiveLead) {
+      return res.status(404).json({ message: 'Prospective lead not found' });
+    }
+
+    prospectiveLead.status = status;
+    await prospectiveLead.save();
+
+    // Also update the most recent Lead with the same phone number, if it exists
+    const matchedLead = await Lead.findOne({ phone: prospectiveLead.phone }).sort({ createdAt: -1 });
+    if (matchedLead && matchedLead.status !== status) {
+      matchedLead.status = status;
+      await matchedLead.save();
+    }
+
+    res.status(200).json({ message: `Prospective lead marked as ${status}`, lead: prospectiveLead });
+  } catch (err) {
+    console.error('Error updating prospective lead status:', err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
 
 module.exports = { getAllProspectiveLeads, addProspectiveLead, updateLeadStatus };

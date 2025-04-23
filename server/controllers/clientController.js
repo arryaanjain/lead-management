@@ -1,5 +1,6 @@
 const Lead = require('../models/Lead');
 const { generateClientToken } = require('../utils/token');
+const ProspectiveLead = require('../models/ProspectiveLead');
 
 //submit form (client)
 const submitForm = async (req, res) => {
@@ -10,7 +11,7 @@ const submitForm = async (req, res) => {
   }
 
   try {
-    // Check if a lead already exists for this phone
+    // Check if a lead already exists for this phone in the main leads collection
     const existingLead = await Lead.findOne({ phone }).sort({ createdAt: -1 });
 
     if (existingLead) {
@@ -20,13 +21,16 @@ const submitForm = async (req, res) => {
       });
     }
 
+    // Check if the number exists in prospective leads
+    const prospective = await ProspectiveLead.findOne({ phone });
+
     const newLead = new Lead({
       name,
       phone,
       city,
       business,
       role,
-      status: 'pending',
+      status: prospective?.status === 'approved' ? 'approved' : 'pending',
     });
 
     await newLead.save();
@@ -34,7 +38,10 @@ const submitForm = async (req, res) => {
     const token = generateClientToken(newLead);
 
     return res.status(200).json({
-      message: 'Form submitted successfully! Awaiting admin approval.',
+      message:
+        newLead.status === 'approved'
+          ? 'You were already approved! Access granted.'
+          : 'Form submitted successfully! Awaiting admin approval.',
       token,
     });
   } catch (err) {
