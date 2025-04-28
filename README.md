@@ -1,11 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Lead Management System - README</title>
-</head>
-<body>
-
 <p align="center"><em>Smart Lead Management and Secure Catalogue Access for Modern Businesses</em></p>
 
 
@@ -118,6 +110,15 @@ VITE_API_URL=http://localhost:5000
 
 <hr>
 
+<h2>🔐 Default Admin Credentials</h2>
+
+<ul>
+  <li><strong>Username:</strong> admin</li>
+  <li><strong>Password:</strong> admin123</li>
+</ul>
+
+<hr>
+
 <h2>📷 Screenshots</h2>
 <ul>
   <li>Client lead form submission screen</li>
@@ -125,7 +126,11 @@ VITE_API_URL=http://localhost:5000
   <li>Catalogue preview screen with mobile page indicators and security notice</li>
 </ul>
 
-<p><em>(Add screenshots here for better visibility!)</em></p>
+<p><em>
+  ![image](https://github.com/user-attachments/assets/9367c1d5-cdd4-438c-ab74-c07a07fd655a)
+  ![image](https://github.com/user-attachments/assets/778ba07f-91d4-4c36-866c-65580bd50ab0)
+  ![image](https://github.com/user-attachments/assets/69cbd62d-097f-4f32-945d-166c06cc2c60)
+</em></p>
 
 <hr>
 
@@ -136,6 +141,3 @@ VITE_API_URL=http://localhost:5000
 
 <h2>📄 License</h2>
 <p>This project is licensed under the <strong>MIT License</strong>.</p>
-
-</body>
-</html>
