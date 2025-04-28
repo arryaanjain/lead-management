@@ -106,8 +106,46 @@ const getLeadStatus = async (req, res) => {
   }
 };
 
+//check status value of phone
+const checkStatus = async (req, res) => {
+  const { phone } = req.params;
+  const client = await db.clients.findOne({ phone });
+
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+
+  res.json({ status: client.status }); // e.g., 'approved', 'pending', etc.
+};
+
+//refresh token if status do not match
+const refreshToken = async (req, res) => {
+  const { phone } = req.params;
+
+  if (!phone) {
+    return res.status(400).json({ message: 'Phone number is required.' });
+  }
+
+  try {
+    const lead = await Lead.findOne({ phone });
+
+    if (!lead) {
+      return res.status(404).json({ message: 'Lead not found.' });
+    }
+
+    // Use the generateClientToken utility
+    const token = generateClientToken(lead);
+
+    return res.status(200).json({ message: 'Token refreshed', token });
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
 module.exports = {
   submitForm,
   verifyPhone,
   getLeadStatus,
+  checkStatus,
+  refreshToken,
 };
