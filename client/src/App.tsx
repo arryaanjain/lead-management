@@ -9,7 +9,7 @@ const App = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Form />} />
-        <Route path="/status" element={<StatusHandler />} />
+        <Route path="/status" element={<ProtectedRoute><StatusHandler /> </ProtectedRoute>} />
         <Route path="/catalogue" element={<ProtectedRoute> <Catalogue /> </ProtectedRoute>} /> {/* <-- Add this */}
       </Routes>
     </BrowserRouter>

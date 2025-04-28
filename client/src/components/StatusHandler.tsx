@@ -1,6 +1,6 @@
 // src/components/StatusHandler.tsx
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Catalogue from './Catalogue';
 import WaitingApproval from './WaitingApproval';
 import axiosJWT from '../utils/axiosJWT';
@@ -11,15 +11,24 @@ const StatusHandler: React.FC = () => {
   const [status, setStatus] = useState<LeadStatus>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const phone = localStorage.getItem('leadPhone');
-    if (!phone) { 
+    if (!phone) {
       localStorage.removeItem('leadPhone');
       localStorage.removeItem('clientAccessToken');
       navigate('/');
       return;
     }
+
+    // Check if status is passed in location state
+    if (location.state?.status) {
+      setStatus(location.state.status);
+      setLoading(false);
+      return;
+    }
+
     const fetchStatus = async () => {
       try {
         const res = await axiosJWT.get(`${import.meta.env.VITE_API_URL}/api/client/leads/status/${phone}`);
@@ -32,7 +41,7 @@ const StatusHandler: React.FC = () => {
     };
 
     fetchStatus();
-  }, []);
+  }, [location.state, navigate]);
 
   if (loading) {
     return <p className="text-center mt-10">Checking your status...</p>;

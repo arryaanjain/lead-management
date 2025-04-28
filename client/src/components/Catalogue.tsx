@@ -1,15 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, TouchEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosJWT from '../utils/axiosJWT';
 import * as pdfjsLib from "pdfjs-dist";
+import { jwtDecode } from 'jwt-decode';
+
+import { DecodedToken } from '../types/token';
 
 // Manually set the workerSrc from the actual .mjs path
 import pdfWorkerSrc from "pdfjs-dist/build/pdf.worker.mjs?url";
-
-// Register the worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
-
-console.log("PDF.js worker src:", pdfWorkerSrc); // Should be something like /assets/pdf.worker.mjs
 
 
 const Catalogue: React.FC = () => {
@@ -31,7 +29,65 @@ const Catalogue: React.FC = () => {
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  //setRotation(90); // Set initial rotation to 90 degrees
+  // Touch handling for swipe
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const minSwipeDistance = 50; // Minimum swipe distance to trigger page change
+
+  let decoded = null;
+
+  //logic to check the latest value of status for phone and handle accordingly
+  const checkTokenStatus = async () => {
+    const token = localStorage.getItem('clientAccessToken');
+    console.log('Fetched token:', token);
+    if (!token) return;
+
+    try {
+      decoded = jwtDecode<DecodedToken>(token);
+      console.log('Decoded token:', decoded);
+    } catch (err) {
+      console.error('Failed to decode token', err);
+      return;
+    }
+    
+    try {
+      const { phone, status: tokenStatus } = decoded;
+      if (!phone) {
+        console.error('Phone number missing in decoded token.');
+        return;
+      }
+
+      const res = await axiosJWT.get(`/api/client/leads/status/${phone}`);
+      const serverStatus = res.data?.status;
+      console.log('Server approved status:', serverStatus);
+
+      if (serverStatus !== tokenStatus) {
+        console.log('Mismatch found, refreshing token...');
+        const refreshRes = await axiosJWT.post(`/api/client/refresh-token/${phone}`);
+
+        const newToken = refreshRes.data?.token;
+        if (newToken) {
+          console.log('New token received, setting it.');
+          localStorage.setItem('clientAccessToken', newToken);
+        }
+      } else {
+        console.log('Token and server status match, no refresh needed.');
+      }
+
+      // If the server status is not approved, navigate to the /status page
+      if (serverStatus !== 'approved') {
+        console.log('Status not approved, redirecting to /status...');
+        navigate('/status', { state: { status: serverStatus } });
+      }
+    } catch (error) {
+      console.error('Error syncing approval status:', error);
+    }
+  };
+
+  // Register the worker
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
+
+  console.log("PDF.js worker src:", pdfWorkerSrc); // Should be something like /assets/pdf.worker.mjs
 
   // Load PDF document
   const loadPdfDocument = async () => {
@@ -64,9 +120,22 @@ const Catalogue: React.FC = () => {
     }
   };
   
+  // Calculate scale to fit the page to the container
+  const calculateScaleToFit = async (page: any) => {
+    if (!containerRef.current) return 1.0;
+    
+    const viewport = page.getViewport({ scale: 1.0, rotation: rotation });
+    const containerWidth = containerRef.current.clientWidth - 40; // 40px for padding
+    const containerHeight = containerRef.current.clientHeight - 40;
+    
+    // Calculate scale to fit width and height
+    const scaleX = containerWidth / viewport.width;
+    const scaleY = containerHeight / viewport.height;
+    
+    // Use the smaller scale to ensure the entire page fits
+    return Math.min(scaleX, scaleY) * 0.95; // 95% to add a small margin
+  };
   
-  
-
   // Render PDF page to canvas
   const renderPage = async () => {
     if (!pdfDocument || !canvasRef.current) return;
@@ -74,9 +143,20 @@ const Catalogue: React.FC = () => {
     try {
       const page = await pdfDocument.getPage(currentPage);
       
+      // For desktop, automatically calculate the scale to fit the entire page
+      let currentScale = scale;
+      if (!isMobile) {
+        const fitScale = await calculateScaleToFit(page);
+        // Only update scale on initial load or page change
+        if (Math.abs(scale - 1.0) < 0.1) { // If scale is close to default
+          currentScale = fitScale;
+          setScale(fitScale);
+        }
+      }
+      
       // Handle rotation
       const viewport = page.getViewport({ 
-        scale: scale,
+        scale: currentScale,
         rotation: rotation 
       });
       
@@ -135,12 +215,20 @@ const Catalogue: React.FC = () => {
   // Navigation functions
   const goToPreviousPage = () => {
     if (currentPage > 1) {
+      // Reset scale to default when changing pages (for desktop fit-to-page)
+      if (!isMobile) {
+        setScale(1.0); // This will trigger a recalculation to fit page
+      }
       setCurrentPage(currentPage - 1);
     }
   };
 
   const goToNextPage = () => {
     if (currentPage < numPages) {
+      // Reset scale to default when changing pages (for desktop fit-to-page)
+      if (!isMobile) {
+        setScale(1.0); // This will trigger a recalculation to fit page
+      }
       setCurrentPage(currentPage + 1);
     }
   };
@@ -153,16 +241,60 @@ const Catalogue: React.FC = () => {
   const zoomOut = () => {
     setScale(prevScale => Math.max(prevScale - 0.2, 0.5));
   };
+  
+  // Reset zoom to fit entire page
+  const resetZoom = async () => {
+    if (!pdfDocument) return;
+    setScale(1.0); // This will trigger recalculation to fit page
+  };
 
   // Rotation function
   const rotatePages = () => {
     setRotation((prev) => (prev + 90) % 360);
+    // Reset scale after rotation to ensure proper fit
+    setScale(1.0);
   };
+
+  // Touch handlers for swipe
+  const handleTouchStart = (e: TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    
+    const distance = touchStartX.current - touchEndX.current;
+    const isSignificantSwipe = Math.abs(distance) > minSwipeDistance;
+    
+    if (isSignificantSwipe) {
+      if (distance > 0) {
+        // Swiped left, go to next page
+        goToNextPage();
+      } else {
+        // Swiped right, go to previous page
+        goToPreviousPage();
+      }
+    }
+    
+    // Reset values
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+
+  //refresh token
+  useEffect(() => {
+    checkTokenStatus();
+  }, []);
 
   // Check device and set responsive state
   useEffect(() => {
     const checkDevice = () => {
-      setIsMobile(window.innerWidth < 768);
+      const isMobileDevice = window.innerWidth < 768;
+      setIsMobile(isMobileDevice);
     };
     
     checkDevice();
@@ -182,6 +314,18 @@ const Catalogue: React.FC = () => {
   useEffect(() => {
     renderPage();
   }, [currentPage, scale, rotation, pdfDocument]);
+  
+  // Re-render when container size changes (for responsive fit-to-page)
+  useEffect(() => {
+    const handleResize = () => {
+      if (!isMobile && pdfDocument) {
+        setScale(1.0); // This will trigger recalculation
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobile, pdfDocument]);
 
   // Security measures
   useEffect(() => {
@@ -343,82 +487,95 @@ const Catalogue: React.FC = () => {
         
         {/* Error state */}
         {error && (
-          <div className="absolute inset-0 z-30 bg-white flex items-center justify-center">
-            <div className="text-center p-6 bg-red-50 rounded-lg">
-              <p className="text-red-600 font-semibold text-lg">{error}</p>
-              <button 
-                onClick={() => {
-                  setError(null);
-                  loadPdfDocument();
-                }}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Try Again
-              </button>
-            </div>
+          <div className="absolute inset-0 z-30 bg-white flex flex-col items-center justify-center text-center px-4">
+            <h2 className="text-xl font-bold text-red-600 mb-2">Failed to load catalogue</h2>
+            <p className="text-gray-600">{error}</p>
+            <button 
+              onClick={loadPdfDocument}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Retry
+            </button>
           </div>
         )}
-        
+
         {/* Security overlay */}
         <SecurityOverlay />
         
-        {/* PDF controls - only show when not scrolling for better mobile UX */}
-        <div className={`absolute top-2 left-0 right-0 z-20 transition-opacity duration-300 px-4 ${isScrolling ? 'opacity-0' : 'opacity-100'}`}>
-          <div className="bg-gray-800 bg-opacity-70 text-white p-2 rounded-lg flex flex-wrap items-center justify-between gap-2">
-            {/* Page controls */}
-            <div className="flex items-center space-x-2">
-              <button 
-                onClick={goToPreviousPage} 
-                disabled={currentPage <= 1 || loading}
-                className={`px-3 py-1 rounded ${currentPage <= 1 || loading ? 'bg-gray-500 opacity-50' : 'bg-blue-600 hover:bg-blue-700'}`}
-              >
-                ◀
-              </button>
-              <span className="text-sm">
-                {currentPage} / {numPages}
-              </span>
-              <button 
-                onClick={goToNextPage} 
-                disabled={currentPage >= numPages || loading}
-                className={`px-3 py-1 rounded ${currentPage >= numPages || loading ? 'bg-gray-500 opacity-50' : 'bg-blue-600 hover:bg-blue-700'}`}
-              >
-                ▶
-              </button>
+        {/* PDF controls - only show for desktop */}
+        {!isMobile && (
+          <>
+            {/* Zoom controls at top */}
+            <div className={`absolute top-4 left-1/2 transform -translate-x-1/2 z-20 transition-opacity duration-300 ${isScrolling ? 'opacity-0' : 'opacity-100'}`}>
+              <div className="bg-gray-800 bg-opacity-70 text-white p-2 rounded-lg flex items-center space-x-2">
+                <button 
+                  onClick={zoomOut} 
+                  disabled={loading}
+                  className={`px-3 py-1 rounded ${loading ? 'bg-gray-500 opacity-50' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  aria-label="Zoom out"
+                >
+                  −
+                </button>
+                <span className="text-sm whitespace-nowrap">
+                  {Math.round(scale * 100)}%
+                </span>
+                <button 
+                  onClick={zoomIn} 
+                  disabled={loading}
+                  className={`px-3 py-1 rounded ${loading ? 'bg-gray-500 opacity-50' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  aria-label="Zoom in"
+                >
+                  +
+                </button>
+                <button 
+                  onClick={resetZoom} 
+                  disabled={loading}
+                  className={`ml-2 px-3 py-1 rounded ${loading ? 'bg-gray-500 opacity-50' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  aria-label="Fit to page"
+                >
+                  ⤢
+                </button>
+                <button 
+                  onClick={rotatePages} 
+                  disabled={loading}
+                  className={`ml-2 px-3 py-1 rounded ${loading ? 'bg-gray-500 opacity-50' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  aria-label="Rotate page"
+                >
+                  ↻
+                </button>
+              </div>
             </div>
             
-            {/* Zoom controls */}
-            <div className="flex items-center space-x-2">
-              <button 
-                onClick={zoomOut} 
-                disabled={loading}
-                className={`px-3 py-1 rounded ${loading ? 'bg-gray-500 opacity-50' : 'bg-blue-600 hover:bg-blue-700'}`}
-              >
-                −
-              </button>
-              <span className="text-sm whitespace-nowrap">
-                {Math.round(scale * 100)}%
-              </span>
-              <button 
-                onClick={zoomIn} 
-                disabled={loading}
-                className={`px-3 py-1 rounded ${loading ? 'bg-gray-500 opacity-50' : 'bg-blue-600 hover:bg-blue-700'}`}
-              >
-                +
-              </button>
-            </div>
+            {/* Left edge navigation button */}
+            <button 
+              onClick={goToPreviousPage} 
+              disabled={currentPage <= 1 || loading}
+              className={`absolute left-4 top-1/2 transform -translate-y-1/2 z-20 transition-opacity duration-300 ${isScrolling ? 'opacity-0' : 'opacity-100'} ${currentPage <= 1 || loading ? 'bg-gray-500 bg-opacity-50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} h-12 w-12 flex items-center justify-center rounded-full text-white`}
+              aria-label="Previous page"
+            >
+              ◀
+            </button>
             
-            {/* Rotation control */}
-            {!isMobile && (
-              <button 
-                onClick={rotatePages} 
-                disabled={loading}
-                className={`px-3 py-1 rounded ${loading ? 'bg-gray-500 opacity-50' : 'bg-blue-600 hover:bg-blue-700'}`}
-              >
-                ↻
-              </button>
-            )}
-          </div>
-        </div>
+            {/* Right edge navigation button */}
+            <button 
+              onClick={goToNextPage} 
+              disabled={currentPage >= numPages || loading}
+              className={`absolute right-4 top-1/2 transform -translate-y-1/2 z-20 transition-opacity duration-300 ${isScrolling ? 'opacity-0' : 'opacity-100'} ${currentPage >= numPages || loading ? 'bg-gray-500 bg-opacity-50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} h-12 w-12 flex items-center justify-center rounded-full text-white`}
+              aria-label="Next page"
+            >
+              ▶
+            </button>
+            
+            {/* Page counter at bottom */}
+            <div className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 transition-opacity duration-300 ${isScrolling ? 'opacity-0' : 'opacity-100'}`}>
+              <div className="bg-gray-800 bg-opacity-70 text-white px-4 py-2 rounded-lg">
+                <span className="text-sm">
+                  {currentPage} / {numPages}
+                </span>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* PDF content area */}
         <div 
@@ -426,11 +583,14 @@ const Catalogue: React.FC = () => {
           className="w-full h-full overflow-auto p-4 bg-gray-100"
           onDragStart={(e) => e.preventDefault()}
           onCopy={(e) => e.preventDefault()}
+          onTouchStart={isMobile ? handleTouchStart : undefined}
+          onTouchMove={isMobile ? handleTouchMove : undefined}
+          onTouchEnd={isMobile ? handleTouchEnd : undefined}
           style={{
-            touchAction: 'pan-y', // Enable touch scrolling on mobile
+            touchAction: isMobile ? 'pan-y' : 'auto', // Enable touch scrolling on mobile
           }}
         >
-          <div className="flex justify-center items-start min-h-full">
+          <div className={`flex justify-center items-start ${!isMobile ? 'min-h-full' : ''}`}>
             <canvas 
               ref={canvasRef} 
               className="shadow-lg"
@@ -440,7 +600,27 @@ const Catalogue: React.FC = () => {
               }}
             />
           </div>
+          
+          {/* Mobile page indicator */}
+          {isMobile && (
+            <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-20 border-2 border-gray-800 bg-transparent text-gray-800 px-4 py-2 rounded-full cursor-pointer">
+              <span className="text-sm">
+                {currentPage} / {numPages}
+              </span>
+            </div>
+          )}
         </div>
+        
+        {/* Instructions for mobile users */}
+        {isMobile && (
+          <div className="absolute top-0 left-0 right-0 z-20 text-center px-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mx-auto max-w-xs">
+              <p className="text-xs text-blue-800">
+                Swipe left or right to navigate pages
+              </p>
+            </div>
+          </div>
+        )}
         
         {/* Security notice */}
         <div className="absolute bottom-0 left-0 right-0 z-20 bg-red-50 border-t border-red-200 p-2 text-center text-xs text-red-600 font-medium">
