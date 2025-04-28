@@ -119,21 +119,6 @@ VITE_API_URL=http://localhost:5000
 
 <hr>
 
-<h2>📷 Screenshots</h2>
-<ul>
-  <li>Client lead form submission screen</li>
-  <li>Admin dashboard showing pending/approved/rejected leads</li>
-  <li>Catalogue preview screen with mobile page indicators and security notice</li>
-</ul>
-
-<p><em>
-  ![image](https://github.com/user-attachments/assets/9367c1d5-cdd4-438c-ab74-c07a07fd655a)
-  ![image](https://github.com/user-attachments/assets/778ba07f-91d4-4c36-866c-65580bd50ab0)
-  ![image](https://github.com/user-attachments/assets/69cbd62d-097f-4f32-945d-166c06cc2c60)
-</em></p>
-
-<hr>
-
 <h2>🤝 Contributing</h2>
 <p>Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.</p>
 
